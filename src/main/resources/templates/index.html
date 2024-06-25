@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>WebSocket Notification Test</title>
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script>
+    let socket;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // 프로젝트 연결 버튼 이벤트 핸들러
+        document.getElementById('connectBtn').addEventListener('click', function() {
+            // 웹소켓 서버에 연결
+            if (!socket) {
+                const memberId = document.getElementById('memberId').value;
+                if (memberId) {
+                    socket = io('http://localhost:9092', {
+                        query: {
+                            memberId: memberId
+                        }
+                    });
+
+                    // 단일 알림을 수신
+                    socket.on('notification', function(data) {
+                        console.log('Received notification:', data);
+                        const notifications = document.getElementById('notifications');
+                        const notification = document.createElement('div');
+                        notification.textContent = `${data.projectName}: ${data.notificationContent}`;
+                        notifications.appendChild(notification);
+                    });
+
+                    // 초기 알림 수신 (리스트)
+                    socket.on('initial_notifications', function(data) {
+                        console.log('Received initial notifications:', data);
+                        if (Array.isArray(data.notificationList)) {
+                            const notifications = document.getElementById('notifications');
+                            data.notificationList.forEach(function(notificationData) {
+                                const notification = document.createElement('div');
+                                notification.textContent = `${notificationData.projectName} : ${notificationData.notificationContent}`;
+                                notifications.appendChild(notification);
+                            });
+                        } else {
+                            console.error('Initial notifications data is not an array:', data.notificationList);
+                        }
+                    });
+
+                    // 웹소켓 연결 오류 로그
+                    socket.on('error', function(error) {
+                        console.error('Socket error:', error);
+                    });
+
+                    console.log(`Attempting to connect with memberId: ${memberId}`);
+                } else {
+                    console.error('Member ID is required to connect');
+                }
+            }
+        });
+
+        // 연결 해제 버튼 이벤트 핸들러
+        document.getElementById('disconnectBtn').addEventListener('click', function() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                console.log('Disconnected from server');
+            }
+        });
+
+        // 읽음 처리 버튼 이벤트 핸들러
+        document.getElementById('markAsReadBtn').addEventListener('click', function() {
+            if (socket) {
+                const memberId = document.getElementById('memberId').value;
+                const notificationId = document.getElementById('notificationId').value;
+                if (memberId && notificationId) {
+                    socket.emit('updateReadStatus', {
+                        memberId: memberId,
+                        notificationId: notificationId
+                    });
+                    console.log(`Marking notification ${notificationId} as read for member ${memberId}`);
+                } else {
+                    console.error('Member ID and Notification ID are required to mark as read');
+                }
+            }
+        });
+
+        // 전체 삭제 버튼 이벤트 핸들러
+        document.getElementById('deleteAllBtn').addEventListener('click', function() {
+            if (socket) {
+                const memberId = document.getElementById('memberId').value;
+                if (memberId) {
+                    socket.emit('deleteAll', memberId, (response) => {
+                        console.log(`Deleting all notifications for member ${memberId}`);
+                        if (response === "success") {
+                            document.getElementById('notifications').innerHTML = ''; // 알림 목록 초기화
+                        } else {
+                            console.error('Failed to delete notifications: ', response);
+                        }
+                    });
+                } else {
+                    console.error('Member ID is required to delete all notifications');
+                }
+            }
+        });
+
+        // 알림 생성 버튼 이벤트 핸들러
+        document.getElementById('createNotificationBtn').addEventListener('click', function() {
+            if (socket) {
+                const memberId = document.getElementById('memberId').value;
+                const projectId = document.getElementById('projectId').value;
+                const content = document.getElementById('content').value;
+                const postId = document.getElementById('postId').value;
+                const boardId = document.getElementById('boardId').value;
+
+                if (projectId && content) {
+                    socket.emit('new_post', {
+                        projectId: projectId,
+                        notificationContent: content,
+                        memberId: memberId,
+                        postId: postId,
+                        boardId: boardId
+                    }, (response) => {
+                        if (response === "success") {
+                            console.log(`Notification created for project ${projectId} with content: ${content}`);
+                        } else {
+                            console.error('Failed to create notification: ', response);
+                        }
+                    });
+                } else {
+                    console.error('Project ID and content are required to create a notification');
+                }
+            }
+        });
+
+    });
+  </script>
+</head>
+<body>
+<h1>WebSocket Notification Test</h1>
+<input type="text" id="memberId" placeholder="Enter Member ID">
+<input type="text" id="notificationId" placeholder="Enter Notification ID to Mark as Read">
+<button id="connectBtn">Connect to Server</button>
+<button id="disconnectBtn">Disconnect</button>
+<button id="markAsReadBtn">Mark as Read</button>
+<button id="deleteAllBtn">Delete All</button>
+
+<h2>Create Notification:</h2>
+<input type="text" id="projectId" placeholder="Enter Project ID">
+<input type="text" id="content" placeholder="Enter Notification Content">
+<input type="text" id="postId" placeholder="Enter Post ID (optional)">
+<input type="text" id="boardId" placeholder="Enter Board ID (optional)">
+<button id="createNotificationBtn">Create Notification</button>
+
+<div id="notifications">
+  <h2>Received Notifications:</h2>
+</div>
+</body>
+</html>
