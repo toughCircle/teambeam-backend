@@ -84,7 +84,7 @@ https://github.com/toughCircle/teambeam/assets/150303834/34860ea8-eb91-445c-80b8
 - 알림 전체 삭제 기능
 
 ### 2. 하위 투두 알림
-https://github.com/toughCircle/teambeam-backend/assets/150303834/7c5a23cb-d726-43d4-98cf-8a39b1fb6174
+![알림](https://github.com/toughCircle/teambeam-backend/assets/150303834/1a0aaf7b-b483-45f7-8fa8-f0f394898287)
 - 매일 자정 오늘 마감인 하위 투두를 조회하여 알림 생성
 
 ## 환경설정
