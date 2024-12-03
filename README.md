@@ -9,12 +9,7 @@
 - Redis
 - Socket io
 
-### 프론트엔드
-- React
-- Next js
-- TypeScript
-- Socket io
-
+  
 ## 프로젝트 구조
 <p align="center">
 
